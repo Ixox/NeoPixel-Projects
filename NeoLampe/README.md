@@ -6,6 +6,6 @@ It's based on a NeoPixel ring and an Arduino nano. I used cheap emakefun nano fo
 
 You'll also need a power switch, a variable resistor 10K linear, and a push button.
 
-Can be easily compiled in vscode/platformIO.
+The arduino firmware be easily compiled in vscode/platformIO.
 
-<img src="pictures/NeoLamps.jpg" width="600px" />
+<img src="pictures/NeoLamps.jpeg" width="600px" />
