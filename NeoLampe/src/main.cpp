@@ -14,7 +14,7 @@
 // analog input
 #define PIN_POT A0
 
-#define NUMPIXELS 12
+#define NUMPIXELS 7
 
 #define EEPROM_SPOT_ADDRESS 0
 

@@ -132,11 +132,11 @@ void LedSpot::animationNextStep()
     case ANIM_1:
     {
         uint8_t numberOfSteps;
-        m_animationSubStep += (m_animationSpeed << 2) - 8;
-        if (m_animationSubStep < -8)
-        {
-            m_animationSubStep = 0;
+        int animSubStepInc = m_animationSpeed;
+        if (animSubStepInc < 8) {
+            animSubStepInc = 8;
         }
+        m_animationSubStep += animSubStepInc;
         numberOfSteps = m_animationSubStep / 0xff;
         if (numberOfSteps > 0)
         {
@@ -166,22 +166,95 @@ void LedSpot::animationNextStep()
         }
 
         uint32_t animColor = getColorFrom8bitsValue(m_animationStep, false);
-        uint32_t animColor2 = getColorFrom8bitsValue(((m_animationStep + 16) % 0xff), false);
-        m_leds->setPixelColor(m_lastUpdatedLed, Adafruit_NeoPixel::Color(0, 0, 0));
-        m_leds->setPixelColor(getLastUpdatedOpositeLed(), Adafruit_NeoPixel::Color(0, 0, 0));
 
-        if (numberOfSteps > 0)
-        {
-            incLastUpdatedLed();
-            // if 7 leds go back to 1 (not 0)
-            if (m_numberOfPixels == 7 && m_lastUpdatedLed == 0)
+        // Special case for my 47 leds lamp
+        if (m_numberOfPixels != 47) {
+            uint32_t animColor2 = getColorFrom8bitsValue(((m_animationStep + 16) % 0xff), false);
+
+            m_leds->setPixelColor(m_lastUpdatedLed, Adafruit_NeoPixel::Color(0, 0, 0));
+            m_leds->setPixelColor(getLastUpdatedOpositeLed(), Adafruit_NeoPixel::Color(0, 0, 0));
+
+            if (numberOfSteps > 0)
             {
-                m_lastUpdatedLed = 1;
+                incLastUpdatedLed();
+                // if 7 leds go back to 1 (not 0)
+                if (m_numberOfPixels == 7 && m_lastUpdatedLed == 0)
+                {
+                    m_lastUpdatedLed = 1;
+                }
             }
+
+            m_leds->setPixelColor(m_lastUpdatedLed, animColor);
+            m_leds->setPixelColor(getLastUpdatedOpositeLed(), animColor2);
+        } else {
+            static int led1 = 0;
+            static int led2 = 0;
+            static int led3 = 0;
+            const int led2Offset = 24;
+            const int led3Offset = 24 + 16;
+
+            uint32_t black = Adafruit_NeoPixel::Color(0, 0, 0);
+            uint32_t animColor2 = getColorFrom8bitsValue(((m_animationStep + 64) % 0xff), false);
+            uint32_t animColor3 = getColorFrom8bitsValue(((m_animationStep + 128) % 0xff), false);
+
+
+
+
+
+
+            if (numberOfSteps > 0) {
+                m_leds->setPixelColor(led1 , black);
+                m_leds->setPixelColor(((led1 + 6) % 24) , black);
+                m_leds->setPixelColor(((led1 + 12) % 24) , black);
+                m_leds->setPixelColor(((led1 + 18) % 24) , black);
+                led1 = (led1 + 1) % 24;
+                m_leds->setPixelColor(led1 , animColor);
+                m_leds->setPixelColor(((led1 + 6) % 24) , animColor);
+                m_leds->setPixelColor(((led1 + 12) % 24) , animColor);
+                m_leds->setPixelColor(((led1 + 18) % 24) , animColor);
+
+
+                m_leds->setPixelColor(15 - led2 + led2Offset, black);
+                m_leds->setPixelColor(15 - ((led2 + 4) % 16) + led2Offset , black);
+                m_leds->setPixelColor(15 - ((led2 + 8) % 16) + led2Offset, black);
+                m_leds->setPixelColor(15 - ((led2 + 12) % 16) + led2Offset , black);
+                led2 = (led2 + 1) % 16;
+                m_leds->setPixelColor(15 - led2 + led2Offset, animColor2);
+                m_leds->setPixelColor(15 - ((led2 + 4) % 16) + led2Offset , animColor2);
+                m_leds->setPixelColor(15 - ((led2 + 8) % 16) + led2Offset, animColor2);
+                m_leds->setPixelColor(15 - ((led1 + 12) % 16) + led2Offset , animColor2);
+
+                m_leds->setPixelColor((led3 >> 1)  + led3Offset, black);
+                m_leds->setPixelColor((((led3 + 6) % 12) >> 1) + led3Offset , black);
+                led3 = (led3 + 1) % 12;
+                m_leds->setPixelColor((led3 >> 1) + led3Offset, animColor3);
+                m_leds->setPixelColor((((led3 + 6) % 12) >> 1) + led3Offset , animColor3);
+            }
+
+
+        }
+    }
+    break;
+    case ANIM_3:
+    {
+        static int lastPixels[15] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        int lRandomPixels = 3;
+        if (m_numberOfPixels > 12) {
+            lRandomPixels = 15;
         }
 
-        m_leds->setPixelColor(m_lastUpdatedLed, animColor);
-        m_leds->setPixelColor(getLastUpdatedOpositeLed(), animColor2);
+        m_animationStep++;
+        for (int k = 0; k < lRandomPixels; k++) {
+            m_leds->setPixelColor(lastPixels[k], Adafruit_NeoPixel::Color(0, 0, 0));
+        }
+        if (m_animationStep > (8 - (m_animationSpeed >> 5)))
+        {
+            m_animationStep = 0;
+            for (int k = 0; k < lRandomPixels; k++) {
+                lastPixels[k] = random(m_numberOfPixels);
+                m_leds->setPixelColor(lastPixels[k], getRandomColor());
+            }
+        }
     }
     break;
     case ANIM_4:
@@ -197,25 +270,6 @@ void LedSpot::animationNextStep()
             setAllColor(Adafruit_NeoPixel::Color(0, 0, 0));
         }
         break;
-    case ANIM_3:
-    {
-        static int lastPixel1 = 0, lastPixel2 = 0, lastPixel3 = 0;
-        m_animationStep++;
-        m_leds->setPixelColor(lastPixel1, Adafruit_NeoPixel::Color(0, 0, 0));
-        m_leds->setPixelColor(lastPixel2, Adafruit_NeoPixel::Color(0, 0, 0));
-        m_leds->setPixelColor(lastPixel3, Adafruit_NeoPixel::Color(0, 0, 0));
-        if (m_animationStep > (8 - (m_animationSpeed >> 5)))
-        {
-            m_animationStep = 0;
-            lastPixel1 = random(m_numberOfPixels);
-            m_leds->setPixelColor(lastPixel1, getRandomColor());
-            lastPixel2 = random(m_numberOfPixels);
-            m_leds->setPixelColor(lastPixel2, getRandomColor());
-            lastPixel3 = random(m_numberOfPixels);
-            m_leds->setPixelColor(lastPixel3, getRandomColor());
-        }
-    }
-    break;
     default:
         // ERROR !
         setAllColor(Adafruit_NeoPixel::Color(200, 0, 0));
